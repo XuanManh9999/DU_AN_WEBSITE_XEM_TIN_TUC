@@ -1,0 +1,41 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+#  profiles:
+##    active: dev
+  application:
+    name: project-tn
+  datasource:
+    url: jdbc:mysql://103.27.239.248/test
+    username: root
+    password: mysql_wnAcbj
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: nguyenxuanmanh2992003@gmail.com
+    password: txoklgxiwyeikode
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+jwt:
+  expiryHour: 2
+  expiryDay: 14
+  secretKey: zzkpqZ1eUo/udLOYXr+/KVcKguT5f2eulxDE/dKjxOWWjsADWEyIBWyUP8EdFZUz
+  refreshKey: nvev8yUsz4hl1wCuSCkvQO+T6NO+ecGjWSBJKRf7N0SuDArEeTPHPHBK1xPe0fAw
