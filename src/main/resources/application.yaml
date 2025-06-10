@@ -8,7 +8,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
 #  profiles:
 ##    active: dev
@@ -39,3 +39,8 @@ jwt:
   expiryDay: 14
   secretKey: zzkpqZ1eUo/udLOYXr+/KVcKguT5f2eulxDE/dKjxOWWjsADWEyIBWyUP8EdFZUz
   refreshKey: nvev8yUsz4hl1wCuSCkvQO+T6NO+ecGjWSBJKRf7N0SuDArEeTPHPHBK1xPe0fAw
+
+cloudinary:
+  cloud_name: dpbo17rbt
+  api_key: 923369223654775
+  api_secret: 7szIKlRno-q8XTeuFIy2YIeLuZ4
