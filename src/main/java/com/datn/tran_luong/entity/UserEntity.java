@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "user")
+@Table(name = "users")
 @FilterDef(name = "activeFilter", parameters = @ParamDef(name = "activeStatus", type = String.class))
 @Filter(name = "activeFilter", condition = "active = :activeStatus")
 public class UserEntity extends BaseEntity<Long> implements UserDetails, Serializable {
@@ -52,6 +52,18 @@ public class UserEntity extends BaseEntity<Long> implements UserDetails, Seriali
 
     @OneToMany(mappedBy = "userId", orphanRemoval = true, fetch = FetchType.EAGER)
     private List<UserRoleEntity> userRoles;
+
+
+    @OneToMany(mappedBy = "author", orphanRemoval = true, fetch = FetchType.EAGER)
+    private List <ArticlesEntity> articlesEntities;
+
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.EAGER)
+    private List <LikeEntity> likeEntities;
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.EAGER)
+    private List <BookmarkEntity> bookmarkEntities;
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -14,6 +14,7 @@ public class AuthProvider extends BaseEntity<Long> {
 
     @Column(name = "provider_code")
     private String providerCode;
+
     @ManyToOne
     private UserEntity user;
 }

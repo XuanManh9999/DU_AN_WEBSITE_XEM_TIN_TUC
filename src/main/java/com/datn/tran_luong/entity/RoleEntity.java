@@ -17,5 +17,4 @@ public class RoleEntity extends BaseEntity<Integer> {
     private String descRole;
     @OneToMany(mappedBy = "roleId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserRoleEntity> userRoles;
-
 }

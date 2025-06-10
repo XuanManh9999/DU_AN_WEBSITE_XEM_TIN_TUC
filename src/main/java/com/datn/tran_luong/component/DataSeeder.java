@@ -31,9 +31,6 @@ public class DataSeeder implements CommandLineRunner  {
         seederRole();
         createAccountAdmin();
     }
-
-
-
     public void seederRole () {
         if (roleRepository.count() == 0) {
             var roleAdmin = new  RoleEntity();
@@ -72,6 +69,5 @@ public class DataSeeder implements CommandLineRunner  {
             }
         }
     }
-
 
 }

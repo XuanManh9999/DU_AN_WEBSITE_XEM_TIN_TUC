@@ -63,7 +63,6 @@ public class ManageUserServiceImpl implements ManageUserService {
                 UserResponseDTO userResponse = modelMapper.map(user, UserResponseDTO.class);
                 userResponse.setCreatedAt(user.getCreateAt());
                 userResponse.setUpdatedAt(user.getUpdateAt());
-
                 List<RoleResponseDTO> roleResponseDTOS = new ArrayList<>();
                 List<UserRoleEntity> userRoleEntities = user.getUserRoles();
                 for (UserRoleEntity userRoleEntity : userRoleEntities) {
@@ -113,7 +112,6 @@ public class ManageUserServiceImpl implements ManageUserService {
                     roleResponseDTO.setUpdatedAt(roleEntity.getUpdateAt());
                     RoleResponseDTOs.add(roleResponseDTO);
                 }
-
                 userResponse.setRoles(RoleResponseDTOs);
 
                 return ResponseEntity.ok().body(

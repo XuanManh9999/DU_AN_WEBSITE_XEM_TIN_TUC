@@ -9,5 +9,4 @@ public class TranLuongApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TranLuongApplication.class, args);
 	}
-
 }

@@ -22,7 +22,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
-@EnableMethodSecurity // 🔥 Thêm dòng này để bật phân quyền theo Controller với @PreAuthorize
+@EnableMethodSecurity
 public class AppConfig {
     private final ManageUserService manageUserService;
     private final PreFilterSecurity preFilterSecurity;
@@ -45,9 +45,7 @@ public class AppConfig {
         };
     }
 
-
     // tao mot password encoder dung de ma hoa mat khau
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
