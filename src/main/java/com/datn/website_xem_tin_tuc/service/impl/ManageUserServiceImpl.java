@@ -10,9 +10,7 @@ import com.datn.website_xem_tin_tuc.entity.UserRoleEntity;
 import com.datn.website_xem_tin_tuc.enums.Active;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
 import com.datn.website_xem_tin_tuc.exceptions.customs.NotFoundException;
-import com.datn.website_xem_tin_tuc.repository.RoleRepository;
-import com.datn.website_xem_tin_tuc.repository.UserRepository;
-import com.datn.website_xem_tin_tuc.repository.UserRoleRepository;
+import com.datn.website_xem_tin_tuc.repository.*;
 import com.datn.website_xem_tin_tuc.service.JwtService;
 import com.datn.website_xem_tin_tuc.service.ManageUserService;
 import lombok.RequiredArgsConstructor;
@@ -38,9 +36,9 @@ public class ManageUserServiceImpl implements ManageUserService {
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
     private final ModelMapper modelMapper;
-    private final JwtService jwtService;
     private final SecurityBeansConfig securityBeansConfig;
-
+    private final LikeRepository likeRepository;
+    private final BookmarkRepository bookmarkRepository;
     @Override
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -340,6 +338,8 @@ public class ManageUserServiceImpl implements ManageUserService {
     }
 
     private ArticlesResponseDTO mapToDto(ArticlesEntity entity) {
+        Integer quantityLike = likeRepository.countByArticles(entity);
+        Integer quantityBookmark = bookmarkRepository.countByArticles(entity);
         return ArticlesResponseDTO.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
@@ -348,6 +348,8 @@ public class ManageUserServiceImpl implements ManageUserService {
                 .content(entity.getContent())
                 .view(entity.getView())
                 .active(entity.getActive())
+                .quantityBookmark(quantityBookmark)
+                .quantityLike(quantityLike)
                 .author(entity.getAuthor() != null ? UserResponseDTO.builder()
                         .id(entity.getAuthor().getId())
                         .username(entity.getAuthor().getUsername())

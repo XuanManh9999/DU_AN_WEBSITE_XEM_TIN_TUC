@@ -8,9 +8,7 @@ import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
 import com.datn.website_xem_tin_tuc.enums.Active;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
 import com.datn.website_xem_tin_tuc.exceptions.customs.NotFoundException;
-import com.datn.website_xem_tin_tuc.repository.ArticlesRepository;
-import com.datn.website_xem_tin_tuc.repository.CategoryRepository;
-import com.datn.website_xem_tin_tuc.repository.UserRepository;
+import com.datn.website_xem_tin_tuc.repository.*;
 import com.datn.website_xem_tin_tuc.service.ArticlesService;
 import com.datn.website_xem_tin_tuc.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +30,8 @@ public class ArticlesServiceImpl implements ArticlesService {
     private final CloudinaryService cloudinaryService;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final LikeRepository likeRepository;
+    private final BookmarkRepository bookmarkRepository;
     @Override
     public List<ArticlesResponseDTO> getAllArticles(int limit, int offset, String sortBy, String order, String title) {
         Sort.Direction direction = order.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -146,6 +146,8 @@ public class ArticlesServiceImpl implements ArticlesService {
     }
 
     private ArticlesResponseDTO mapToDto(ArticlesEntity entity) {
+        Integer quantityLike = likeRepository.countByArticles(entity);
+        Integer quantityBookmark = bookmarkRepository.countByArticles(entity);
         return ArticlesResponseDTO.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
@@ -154,6 +156,8 @@ public class ArticlesServiceImpl implements ArticlesService {
                 .thumbnail(entity.getThumbnail())
                 .view(entity.getView())
                 .active(entity.getActive())
+                .quantityBookmark(quantityBookmark)
+                .quantityLike(quantityLike)
                 .author(UserResponseDTO.builder()
                         .id(entity.getAuthor().getId())
                         .username(entity.getAuthor().getUsername())

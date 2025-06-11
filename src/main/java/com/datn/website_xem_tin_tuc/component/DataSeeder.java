@@ -25,7 +25,6 @@ public class DataSeeder implements CommandLineRunner  {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
 
-
     @Override
     public void run(String... args)  {
         seederRole();

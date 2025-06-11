@@ -18,6 +18,8 @@ public class ArticlesResponseDTO {
     private Active active;
     private String slug;
     private Integer view;
+    private Integer quantityLike;
+    private Integer quantityBookmark;
     private UserResponseDTO author;
     private CategoryResponseDTO category;
 
