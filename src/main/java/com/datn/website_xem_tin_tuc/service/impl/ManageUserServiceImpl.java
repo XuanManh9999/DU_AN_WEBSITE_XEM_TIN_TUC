@@ -2,10 +2,7 @@ package com.datn.website_xem_tin_tuc.service.impl;
 
 import com.datn.website_xem_tin_tuc.config.security.SecurityBeansConfig;
 import com.datn.website_xem_tin_tuc.dto.request.UserRequest;
-import com.datn.website_xem_tin_tuc.dto.response.ArticlesResponseDTO;
-import com.datn.website_xem_tin_tuc.dto.response.CommonResponse;
-import com.datn.website_xem_tin_tuc.dto.response.RoleResponseDTO;
-import com.datn.website_xem_tin_tuc.dto.response.UserResponseDTO;
+import com.datn.website_xem_tin_tuc.dto.response.*;
 import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
 import com.datn.website_xem_tin_tuc.entity.RoleEntity;
 import com.datn.website_xem_tin_tuc.entity.UserEntity;
@@ -80,9 +77,8 @@ public class ManageUserServiceImpl implements ManageUserService {
                 }
 
                 for (ArticlesEntity articlesEntity : user.getArticlesEntities()) {
-                    ArticlesResponseDTO articlesResponseDTO = modelMapper.map(articlesEntity, ArticlesResponseDTO.class);
-                    articlesResponseDTO.setAuthor(articlesEntity.getAuthor().getUsername());
-                    articlesResponseDTO.setCategory(articlesEntity.getCategory().getName());
+                    ArticlesResponseDTO articlesResponseDTO = mapToDto(articlesEntity);
+                    articlesResponseDTOS.add(articlesResponseDTO);
                 }
                 userResponse.setArticles(articlesResponseDTOS);
                 userResponse.setRoles(roleResponseDTOS);
@@ -112,6 +108,7 @@ public class ManageUserServiceImpl implements ManageUserService {
                 userResponse.setUpdatedAt(user.get().getUpdateAt());
                 List<UserRoleEntity> userRoleEntitys = user.get().getUserRoles();
                 List<RoleResponseDTO> RoleResponseDTOs = new ArrayList<>();
+                List<ArticlesResponseDTO> articlesResponseDTOS = new ArrayList<>();
                 for (UserRoleEntity userRoleEntity : userRoleEntitys) {
                     RoleEntity roleEntity = userRoleEntity.getRoleId();
                     RoleResponseDTO roleResponseDTO = new RoleResponseDTO();
@@ -122,6 +119,11 @@ public class ManageUserServiceImpl implements ManageUserService {
                     roleResponseDTO.setUpdatedAt(roleEntity.getUpdateAt());
                     RoleResponseDTOs.add(roleResponseDTO);
                 }
+                for (ArticlesEntity articlesEntity : user.get().getArticlesEntities()) {
+                    ArticlesResponseDTO articlesResponseDTO = mapToDto(articlesEntity);
+                    articlesResponseDTOS.add(articlesResponseDTO);
+                }
+                userResponse.setArticles(articlesResponseDTOS);
                 userResponse.setRoles(RoleResponseDTOs);
 
                 return ResponseEntity.ok().body(
@@ -337,32 +339,30 @@ public class ManageUserServiceImpl implements ManageUserService {
         }
     }
 
-//    @Override
-//    public ResponseEntity<CommonResponse> changeInfoUser(ChangeInfoUserRequest changeInfoUserRequest, String token) {
-//        try {
-//            String username = jwtService.extractUsername(token, TokenType.ACCESS_TOKEN);
-//            if (username != null) {
-//                Optional<UserEntity> user = userRepository.findByUsername(username);
-//                if (user.isPresent()) {
-//                    UserEntity userEntity = user.get();
-//                    userEntity.setPassword(securityBeansConfig.passwordEncoder().encode(changeInfoUserRequest.getPassword()));
-//                    userEntity.setAvatar(changeInfoUserRequest.getAvatar());
-//                    userEntity.setPhoneNumber(changeInfoUserRequest.getPhone_number());
-//                    userRepository.save(userEntity);
-//                    return ResponseEntity.ok().body(
-//                            CommonResponse.builder()
-//                                    .status(HttpStatus.OK.value())
-//                                    .message("Update User Done")
-//                                    .build()
-//                    );
-//                }else {
-//                    throw new  NotFoundException("User not found");
-//                }
-//            }else {
-//                throw new  NotFoundException("User not found");
-//            }
-//        }catch (Exception e) {
-//            throw e;
-//        }
-//    }
+    private ArticlesResponseDTO mapToDto(ArticlesEntity entity) {
+        return ArticlesResponseDTO.builder()
+                .id(entity.getId())
+                .title(entity.getTitle())
+                .slug(entity.getSlug())
+                .thumbnail(entity.getThumbnail())
+                .content(entity.getContent())
+                .view(entity.getView())
+                .active(entity.getActive())
+                .author(entity.getAuthor() != null ? UserResponseDTO.builder()
+                        .id(entity.getAuthor().getId())
+                        .username(entity.getAuthor().getUsername())
+                        .phoneNumber(entity.getAuthor().getPhoneNumber())
+                        .email(entity.getAuthor().getEmail())
+                        .background(entity.getAuthor().getBackground())
+                        .avatar(entity.getAuthor().getAvatar())
+                        .createdAt(entity.getAuthor().getCreateAt())
+                        .updatedAt(entity.getAuthor().getUpdateAt())
+                        .build() : null)
+                .category(entity.getCategory() != null ? CategoryResponseDTO.builder()
+                        .id(entity.getCategory().getId())
+                        .name(entity.getCategory().getName())
+                        .slug(entity.getCategory().getSlug())
+                        .build() : null)
+                .build();
+    }
 }

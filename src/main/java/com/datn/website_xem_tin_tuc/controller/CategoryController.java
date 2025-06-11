@@ -2,10 +2,13 @@ package com.datn.website_xem_tin_tuc.controller;
 
 import com.datn.website_xem_tin_tuc.dto.request.CategoryRequestDTO;
 import com.datn.website_xem_tin_tuc.dto.response.CategoryResponseDTO;
+import com.datn.website_xem_tin_tuc.dto.response.CommonResponse;
 import com.datn.website_xem_tin_tuc.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,30 +18,55 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping("/all")
-    public Page<CategoryResponseDTO> getAll(
+    public ResponseEntity<?> getAll(
             @RequestParam(required = false, defaultValue = "") String keyword,
             Pageable pageable
     ) {
-        return categoryService.getAll(keyword, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse
+                .builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Lấy tất cả thông tin danh mục thành công")
+                        .data(categoryService.getAllAsTree(keyword))
+                .build());
     }
 
     @GetMapping("/{id}")
-    public CategoryResponseDTO getById(@PathVariable Long id) {
-        return categoryService.getById(id);
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse
+                .builder()
+                .status(HttpStatus.OK.value())
+                .message("Lấy danh mục theo id thành công")
+                .data(categoryService.getById(id))
+                .build());
     }
 
     @PostMapping
-    public CategoryResponseDTO create(@RequestBody CategoryRequestDTO dto) {
-        return categoryService.create(dto);
+    public ResponseEntity<?>  create(@RequestBody CategoryRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse
+                .builder()
+                .status(HttpStatus.OK.value())
+                .message("Thêm danh mục thành công")
+                .data(categoryService.create(dto))
+                .build());
     }
 
     @PutMapping("/{id}")
-    public CategoryResponseDTO update(@PathVariable Long id, @RequestBody CategoryRequestDTO dto) {
-        return categoryService.update(id, dto);
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody CategoryRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse
+                .builder()
+                .status(HttpStatus.OK.value())
+                .message("Cập nhật danh mục thành công")
+                .data(categoryService.update(id, dto))
+                .build());
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         categoryService.delete(id);
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse
+                .builder()
+                .status(HttpStatus.OK.value())
+                .message("Xóa danh mục thành công")
+                .build());
     }
 }

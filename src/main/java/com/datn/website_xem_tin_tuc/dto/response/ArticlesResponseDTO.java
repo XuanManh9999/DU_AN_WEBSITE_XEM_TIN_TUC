@@ -1,5 +1,6 @@
 package com.datn.website_xem_tin_tuc.dto.response;
 
+import com.datn.website_xem_tin_tuc.enums.Active;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,10 @@ public class ArticlesResponseDTO {
     private String title;
     private String content;
     private String thumbnail;
+    private Active active;
+    private String slug;
     private Integer view;
-    private String author;
-    private String category;
+    private UserResponseDTO author;
+    private CategoryResponseDTO category;
+
 }
