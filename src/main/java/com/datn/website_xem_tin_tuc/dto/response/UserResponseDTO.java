@@ -21,4 +21,5 @@ public class UserResponseDTO {
     private Date updatedAt;
     private List<RoleResponseDTO> roles;
     private List<ArticlesResponseDTO> articles;
+    private List<AuthProviderResponseDTO> authProviderResponseDTO;
 }

@@ -6,6 +6,7 @@ import com.datn.website_xem_tin_tuc.dto.response.CategoryResponseDTO;
 import com.datn.website_xem_tin_tuc.dto.response.UserResponseDTO;
 import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
 import com.datn.website_xem_tin_tuc.enums.Active;
+import com.datn.website_xem_tin_tuc.enums.TypeArticles;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
 import com.datn.website_xem_tin_tuc.exceptions.customs.NotFoundException;
 import com.datn.website_xem_tin_tuc.repository.*;
@@ -57,7 +58,7 @@ public class ArticlesServiceImpl implements ArticlesService {
 
     @Override
     public ArticlesResponseDTO createArticle(String title, String slug, String content,
-                                             MultipartFile thumbnail, Long authorId, Long categoryId) {
+                                             MultipartFile thumbnail, TypeArticles typeEnum, Long authorId, Long categoryId) {
         if (articlesRepository.existsByTitleIgnoreCase(title)) {
             throw new DuplicateResourceException("Tiêu đề bài viết đã tồn tại");
         }
@@ -70,6 +71,7 @@ public class ArticlesServiceImpl implements ArticlesService {
         article.setTitle(title);
         article.setSlug(slug);
         article.setContent(content);
+        article.setType(typeEnum);
         article.setView(0);
 
         if (thumbnail != null && !thumbnail.isEmpty()) {
@@ -113,6 +115,9 @@ public class ArticlesServiceImpl implements ArticlesService {
         if (request.getAuthorId() != null) {
             article.setAuthor(userRepository.findById(request.getAuthorId())
                     .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng")));
+        }
+        if (request.getType() != null) {
+            article.setType(request.getType());
         }
 
         if (request.getCategoryId() != null) {

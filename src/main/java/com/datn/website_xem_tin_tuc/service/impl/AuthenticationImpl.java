@@ -29,7 +29,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static com.datn.website_xem_tin_tuc.enums.TokenType.REFRESH_TOKEN;
@@ -89,58 +92,105 @@ public class AuthenticationImpl implements AuthenticationService {
                 .accessToken(assessToken)
                 .build();
     }
-
+    @Transactional
     @Override
     public CommonResponse registerUser(RegisterRequest registerRequest) {
         try {
             LocalDateTime now = LocalDateTime.now();
-            Optional<UserEntity> userEntity = userEntityRepository.findByUsernameAndEmail(registerRequest.getUserName(), registerRequest.getEmail());
+
+            Optional<UserEntity> userEntity = userEntityRepository.findByUsernameAndEmail(
+                    registerRequest.getUserName(), registerRequest.getEmail());
             Optional<UserEntity> userEntity_email = userEntityRepository.findByEmail(registerRequest.getEmail());
-            if (userEntity.isPresent() ) {
-                throw new DuplicateResourceException("Tài khoản đã tồn tại trong hệ thống");
+            Optional<UserEntity> userEntity_username = userEntityRepository.findByUsername(registerRequest.getUserName());
+
+            // Trường hợp username đã tồn tại và đang hoạt động
+            if (userEntity_username.isPresent() && userEntity_username.get().getActive() == Active.HOAT_DONG) {
+                throw new DuplicateResourceException("Tên tài khoản đã tồn tại.");
             }
-            if (userEntity_email.isPresent()) {
-                throw new DuplicateResourceException("Tài khoản đã tồn tại trên hệ thống với một phương thức đăng nhập khác. ");
+
+            // Trường hợp username + email đều tồn tại nhưng bị khóa
+            if (userEntity.isPresent() && userEntity.get().getActive() == Active.BI_KHOA) {
+                throw new DuplicateResourceException("Tài khoản đã tồn tại trong hệ thống nhưng đang bị khóa.");
             }
+
+            // Trường hợp email đã tồn tại với trạng thái hoạt động (đăng nhập bằng cách khác)
+            if (userEntity_email.isPresent() && userEntity_email.get().getActive() == Active.HOAT_DONG) {
+                throw new DuplicateResourceException("Tài khoản đã tồn tại trên hệ thống với một phương thức đăng nhập khác.");
+            }
+
+            // ✅ Nếu email đã tồn tại nhưng chưa hoạt động → gửi lại OTP
+            if (userEntity_email.isPresent() && userEntity_email.get().getActive() == Active.CHUA_HOAT_DONG) {
+                // Xoá OTP cũ (nếu có)
+                    otpRepository.deleteByEmail(registerRequest.getEmail());
+
+                // Gửi OTP mới
+                String encode = randomStringGenerator.generateRandomString(6);
+                OtpEntity otp = new OtpEntity();
+                otp.setEmail(registerRequest.getEmail());
+                otp.setOtpCode(encode);
+                otp.setExpiresAt(now.plusSeconds(120));
+                otpRepository.save(otp);
+
+                // Gửi mail
+                emailSending.sendEmail(registerRequest.getEmail(), "Tin tức News 24h", "<div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; background: #f9f9f9;'>"
+                        + "<h2 style='color: #333;'>🔑 Xác nhận OTP của bạn</h2>"
+                        + "<p>Chào bạn,</p>"
+                        + "<p>Đây là mã OTP của bạn để xác nhận: <strong style='font-size: 18px; color: #d9534f;'>" + encode + "</strong></p>"
+                        + "<p>Mã OTP này chỉ có hiệu lực trong <strong>2 phút</strong>. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>"
+                        + "<hr style='border: none; border-top: 1px solid #ddd;'/>"
+                        + "<p style='font-size: 12px; color: #666;'>Nếu bạn không yêu cầu OTP này, vui lòng bỏ qua email này.</p>"
+                        + "<p style='font-size: 12px; color: #666;'>Cảm ơn bạn,<br/>Trang tin tức hàng đầu Việt Nam - Cập nhật tin tức nhanh nhất, chính xác nhất từ trong nước và thế giới.</p>"
+                        + "</div>");
+
+                return CommonResponse.builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Tài khoản đã tồn tại nhưng chưa xác thực. Mã OTP mới đã được gửi lại.")
+                        .build();
+            }
+
+            // ✅ Trường hợp hoàn toàn mới: tạo user mới
             UserEntity user = new UserEntity();
-
-
             user.setUsername(registerRequest.getUserName());
             user.setEmail(registerRequest.getEmail());
-            String encodePassworrd = passwordEncoder.encode(registerRequest.getPassword());
-            user.setPassword(encodePassworrd);
+            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+            user.setActive(Active.CHUA_HOAT_DONG);
 
+            // Lưu user
+            userEntityRepository.save(user);
+
+            // Gán role mặc định là ROLE_USER
             Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByName(Role.ROLE_USER);
-
             UserRoleEntity userRole = new UserRoleEntity();
-
             userRole.setUserId(user);
             userRole.setRoleId(roleEntity.get());
-            userEntityRepository.save(user);
             userRole.setActive(Active.HOAT_DONG);
             userRoleRepository.save(userRole);
 
+            // Gửi OTP mới
             String encode = randomStringGenerator.generateRandomString(6);
             OtpEntity otp = new OtpEntity();
             otp.setEmail(registerRequest.getEmail());
             otp.setOtpCode(encode);
             otp.setExpiresAt(now.plusSeconds(120));
             otpRepository.save(otp);
-            emailSending.sendEmail(registerRequest.getEmail(), "IMGBB OTP", "<div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; background: #f9f9f9;'>"
+
+            emailSending.sendEmail(registerRequest.getEmail(), "Tin tức News 24h", "<div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; background: #f9f9f9;'>"
                     + "<h2 style='color: #333;'>🔑 Xác nhận OTP của bạn</h2>"
                     + "<p>Chào bạn,</p>"
                     + "<p>Đây là mã OTP của bạn để xác nhận: <strong style='font-size: 18px; color: #d9534f;'>" + encode + "</strong></p>"
                     + "<p>Mã OTP này chỉ có hiệu lực trong <strong>2 phút</strong>. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>"
                     + "<hr style='border: none; border-top: 1px solid #ddd;'/>"
                     + "<p style='font-size: 12px; color: #666;'>Nếu bạn không yêu cầu OTP này, vui lòng bỏ qua email này.</p>"
-                    + "<p style='font-size: 12px; color: #666;'>Cảm ơn bạn,<br/>Hệ thống lưu trữ file hàng đầu Việt Nam</p>"
+                    + "<p style='font-size: 12px; color: #666;'>Cảm ơn bạn,<br/>Trang tin tức hàng đầu Việt Nam - Cập nhật tin tức nhanh nhất, chính xác nhất từ trong nước và thế giới.</p>"
                     + "</div>");
+
             return CommonResponse.builder()
                     .status(HttpStatus.OK.value())
-                    .message("User registered successfully")
+                    .message("Đăng ký tài khoản thành công. Vui lòng kiểm tra email để xác thực OTP.")
                     .build();
-        }catch (Exception e) {
-            throw e;
+
+        } catch (Exception e) {
+            throw e; // Có thể custom lại exception cho gọn
         }
     }
 

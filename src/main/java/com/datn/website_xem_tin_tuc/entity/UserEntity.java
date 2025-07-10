@@ -65,6 +65,10 @@ public class UserEntity extends BaseEntity<Long> implements UserDetails, Seriali
     private List <BookmarkEntity> bookmarkEntities;
 
 
+    @OneToMany(mappedBy = "user")
+    private List<AuthProvider> authProviders;
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return userRoles.stream()

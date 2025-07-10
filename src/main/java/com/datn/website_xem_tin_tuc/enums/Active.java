@@ -3,6 +3,7 @@ package com.datn.website_xem_tin_tuc.enums;
 public enum Active {
     CHUA_HOAT_DONG(0),
     HOAT_DONG(1),
+    BI_KHOA(2)
     ;
     private final int value;
 

@@ -17,7 +17,7 @@ public class FirebaseConfig {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
                 // Đọc file từ classpath thay vì đường dẫn cứng
-                InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("fire_base_key_manh.json");
+                InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("fire_base_key_luong.json");
 
                 if (serviceAccount == null) {
                     throw new IOException("Không tìm thấy tệp cấu hình Firebase.");

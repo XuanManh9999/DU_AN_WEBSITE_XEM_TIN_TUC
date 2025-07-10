@@ -1,5 +1,6 @@
 package com.datn.website_xem_tin_tuc.entity;
 
+import com.datn.website_xem_tin_tuc.enums.TypeArticles;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -13,6 +14,9 @@ public class ArticlesEntity extends BaseEntity<Long> {
     private String title;
     @Column(name = "slug")
     private String slug;
+
+    @Column(name = "type")
+    private TypeArticles type;
 
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;

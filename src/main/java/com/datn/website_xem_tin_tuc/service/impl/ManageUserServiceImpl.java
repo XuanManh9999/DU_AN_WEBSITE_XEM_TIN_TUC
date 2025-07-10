@@ -1,16 +1,19 @@
 package com.datn.website_xem_tin_tuc.service.impl;
 
+import com.datn.website_xem_tin_tuc.component.CurrentUser;
 import com.datn.website_xem_tin_tuc.config.security.SecurityBeansConfig;
+import com.datn.website_xem_tin_tuc.dto.cloudinary.CloudinaryUploadResponseDTO;
+import com.datn.website_xem_tin_tuc.dto.request.ChangePasswordRequest;
 import com.datn.website_xem_tin_tuc.dto.request.UserRequest;
 import com.datn.website_xem_tin_tuc.dto.response.*;
-import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
-import com.datn.website_xem_tin_tuc.entity.RoleEntity;
-import com.datn.website_xem_tin_tuc.entity.UserEntity;
-import com.datn.website_xem_tin_tuc.entity.UserRoleEntity;
+import com.datn.website_xem_tin_tuc.entity.*;
 import com.datn.website_xem_tin_tuc.enums.Active;
+import com.datn.website_xem_tin_tuc.enums.TokenType;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
 import com.datn.website_xem_tin_tuc.exceptions.customs.NotFoundException;
 import com.datn.website_xem_tin_tuc.repository.*;
+import com.datn.website_xem_tin_tuc.service.AuthenticationService;
+import com.datn.website_xem_tin_tuc.service.CloudinaryService;
 import com.datn.website_xem_tin_tuc.service.JwtService;
 import com.datn.website_xem_tin_tuc.service.ManageUserService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +44,11 @@ public class ManageUserServiceImpl implements ManageUserService {
     private final SecurityBeansConfig securityBeansConfig;
     private final LikeRepository likeRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final JwtService jwtService;
+    private final ModelMapper modelMapperConfig;
+    private final PasswordEncoder passwordEncoder;
+    private final CurrentUser currentUser;
+    private final CloudinaryService cloudinaryService;
     @Override
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -332,6 +342,99 @@ public class ManageUserServiceImpl implements ManageUserService {
             }else {
                 throw new  NotFoundException("User not found");
             }
+        }catch (Exception ex) {
+            throw ex;
+        }
+    }
+
+    @Override
+    public ResponseEntity<CommonResponse> getCurrentUser(String token) {
+        try {
+            String username = jwtService.extractUsername(token, TokenType.ACCESS_TOKEN);
+            Optional<UserEntity> user = userRepository.findByUsername(username);
+            if (user.isPresent()) {
+                UserResponseDTO userResponseDTO = modelMapperConfig.map(user.get(), UserResponseDTO.class);
+                userResponseDTO.setCreatedAt(user.get().getCreateAt());
+                userResponseDTO.setUpdatedAt(user.get().getUpdateAt());
+                List<UserRoleEntity> userRoleEntitys = user.get().getUserRoles();
+                List<RoleResponseDTO> RoleResponseDTOs = new ArrayList<>();
+                for (UserRoleEntity userRoleEntity : userRoleEntitys) {
+                    RoleEntity roleEntity = userRoleEntity.getRoleId();
+                    RoleResponseDTO roleResponseDTO = new RoleResponseDTO();
+                    roleResponseDTO.setId(roleEntity.getId());
+                    roleResponseDTO.setName(roleEntity.getName());
+                    roleResponseDTO.setDescRole(roleEntity.getDescRole());
+                    roleResponseDTO.setCreatedAt(roleEntity.getCreateAt());
+                    roleResponseDTO.setUpdatedAt(roleEntity.getUpdateAt());
+                    RoleResponseDTOs.add(roleResponseDTO);
+                }
+                List<AuthProviderResponseDTO> providerResponseDTOS = new ArrayList<>();
+                for (AuthProvider authProvider : user.get().getAuthProviders()) {
+                    AuthProviderResponseDTO authProviderResponseDTO = modelMapper.map(authProvider, AuthProviderResponseDTO.class);
+                    providerResponseDTOS.add(authProviderResponseDTO);
+                }
+
+                userResponseDTO.setRoles(RoleResponseDTOs);
+                userResponseDTO.setAuthProviderResponseDTO(providerResponseDTOS);
+                return ResponseEntity.ok().body(CommonResponse.builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Get current user Done")
+                        .data(userResponseDTO)
+                        .build());
+            }else {
+                throw new NotFoundException("User not found");
+            }
+        }catch (Exception e) {
+            throw e;
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> updateInfoUser(String username, MultipartFile avatar) {
+        try {
+            int quantity = userRepository.countUserByUsername(username);
+            if (quantity > 0) {
+                throw new DuplicateResourceException("Tên người dùng đã tồn tại trên hệ thống");
+            }
+            UserEntity user = currentUser.getCurrentUser();
+            if (avatar != null) {
+                CloudinaryUploadResponseDTO cloudinaryUploadResponseDTO =  cloudinaryService.uploadFile(avatar);
+                user.setAvatar(cloudinaryUploadResponseDTO.getSecureUrl());
+            }
+            if (username != null) {
+                user.setUsername(username);
+            }
+
+            userRepository.save(user);
+            return ResponseEntity.ok().body(CommonResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("Cập nhật thông tin thành công")
+                    .build());
+        }catch (Exception ex) {
+            throw ex;
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> changePasswordUser(ChangePasswordRequest changePasswordRequest) {
+        try {
+            UserEntity user = currentUser.getCurrentUser();
+            boolean checkPass = passwordEncoder.matches(changePasswordRequest.getPassword(), user.getPassword());
+            if (checkPass) {
+                String newPassword = passwordEncoder.encode(changePasswordRequest.getPasswordNew());
+                user.setPassword(newPassword);
+                userRepository.save(user);
+                return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.builder()
+                                .status(HttpStatus.OK.value())
+                                .message("Cập nhật mật khẩu thành công")
+                        .build());
+            }else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .message("Mật khẩu không khớp. Vui lòng kiểm tra lại")
+                        .build());
+            }
+
         }catch (Exception ex) {
             throw ex;
         }

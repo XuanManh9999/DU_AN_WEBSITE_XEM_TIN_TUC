@@ -21,6 +21,6 @@ public enum Role {
                 return role;
             }
         }
-        return null; // Hoặc ném exception nếu không tìm thấy
+        return null;
     }
 }
