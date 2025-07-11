@@ -27,7 +27,7 @@ public class AppConfig {
     private final ManageUserService manageUserService;
     private final PreFilterSecurity preFilterSecurity;
     private final SecurityBeansConfig securityBeansConfig;
-    private String [] WHITE_LIST = {"/auth/**", "/api/v1/payment/**", "/api/v1/posts/**", "/api/v1/category-posts/**", "/api/v1/category-posts/by-category/**"};
+    private String [] WHITE_LIST = {"/auth/**", "/api/v1/payment/**", "/api/v1/posts/**", "/api/v1/category-posts/**", "/api/v1/category-posts/by-category/**", "/api/v1/category/**", "/api/v1/articles/**"};
 
     // config cors giup trinh duyet xac dinh cac origin nao duoc phep truy cap
     @Bean

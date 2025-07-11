@@ -3,6 +3,7 @@ package com.datn.website_xem_tin_tuc.service.impl;
 import com.datn.website_xem_tin_tuc.dto.request.ArticlesRequest;
 import com.datn.website_xem_tin_tuc.dto.response.ArticlesResponseDTO;
 import com.datn.website_xem_tin_tuc.dto.response.CategoryResponseDTO;
+import com.datn.website_xem_tin_tuc.dto.response.CommonResponse;
 import com.datn.website_xem_tin_tuc.dto.response.UserResponseDTO;
 import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
 import com.datn.website_xem_tin_tuc.enums.Active;
@@ -33,8 +34,9 @@ public class ArticlesServiceImpl implements ArticlesService {
     private final CategoryRepository categoryRepository;
     private final LikeRepository likeRepository;
     private final BookmarkRepository bookmarkRepository;
+
     @Override
-    public List<ArticlesResponseDTO> getAllArticles(int limit, int offset, String sortBy, String order, String title) {
+    public CommonResponse getAllArticles(int limit, int offset, String sortBy, String order, String title) {
         Sort.Direction direction = order.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(offset / limit, limit, Sort.by(direction, sortBy));
 
@@ -46,8 +48,20 @@ public class ArticlesServiceImpl implements ArticlesService {
             page = articlesRepository.findAll(pageable);
         }
 
-        return page.getContent().stream().map(this::mapToDto).collect(Collectors.toList());
+        List<ArticlesResponseDTO> articles = page.getContent().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+
+        return CommonResponse.builder()
+                .status(200)
+                .message("Lấy danh sách bài viết thành công")
+                .data(articles)
+                .totalPages(page.getTotalPages())
+                .totalItems(page.getTotalElements())
+                .currentPage(page.getNumber() + 1) // page.getNumber() là index bắt đầu từ 0
+                .build();
     }
+
 
     @Override
     public ArticlesResponseDTO getArticleById(Long id) {
@@ -178,6 +192,7 @@ public class ArticlesServiceImpl implements ArticlesService {
                         .id(entity.getCategory().getId())
                         .slug(entity.getCategory().getSlug())
                         .build())
+                .createAt(entity.getCreateAt())
                 .build();
     }
 }

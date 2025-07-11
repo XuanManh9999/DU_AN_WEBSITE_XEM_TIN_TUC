@@ -24,11 +24,7 @@ public class ArticlesController {
                                            @RequestParam(name = "sortBy", defaultValue = "view") String sortBy,
                                            @RequestParam(name = "order", defaultValue = "desc") String order,
                                            @RequestParam(name = "title", required = false) String title) {
-        return ResponseEntity.ok(CommonResponse.builder()
-                .message("Lấy toàn bộ bài viết thành công")
-                .status(HttpStatus.OK.value())
-                .data(articlesService.getAllArticles(limit, offset, sortBy, order, title))
-                .build());
+        return ResponseEntity.status(HttpStatus.OK).body(articlesService.getAllArticles(limit, offset, sortBy, order, title));
     }
 
     @GetMapping("/{articlesId}")
