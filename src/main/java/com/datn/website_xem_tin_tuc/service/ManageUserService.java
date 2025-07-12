@@ -18,8 +18,6 @@ public interface ManageUserService {
     ResponseEntity<CommonResponse> addUser(UserRequest userRequest);
     ResponseEntity<CommonResponse> updateUser(UserRequest userRequest, Long userId);
     ResponseEntity<CommonResponse> deleteUser(Long userId);
-    ResponseEntity<?> getAllRoles();
-    ResponseEntity<?> getUserByName(String name);
     ResponseEntity<CommonResponse> getCurrentUser(String token);
     ResponseEntity<?> updateInfoUser(String username, MultipartFile avatar);
     ResponseEntity<?> changePasswordUser(ChangePasswordRequest changePasswordRequest);

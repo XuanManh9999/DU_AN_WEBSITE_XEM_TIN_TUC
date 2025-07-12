@@ -12,7 +12,6 @@ import com.datn.website_xem_tin_tuc.enums.TokenType;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
 import com.datn.website_xem_tin_tuc.exceptions.customs.NotFoundException;
 import com.datn.website_xem_tin_tuc.repository.*;
-import com.datn.website_xem_tin_tuc.service.AuthenticationService;
 import com.datn.website_xem_tin_tuc.service.CloudinaryService;
 import com.datn.website_xem_tin_tuc.service.JwtService;
 import com.datn.website_xem_tin_tuc.service.ManageUserService;
@@ -287,65 +286,7 @@ public class ManageUserServiceImpl implements ManageUserService {
         }
     }
 
-    @Override
-    public ResponseEntity<?> getAllRoles() {
-        try {
-            List<RoleResponseDTO> roleResponseDTOS = new ArrayList<>();
-            List<RoleEntity> roleEntities = roleRepository.findAll();
-            for (RoleEntity roleEntity : roleEntities) {
-                RoleResponseDTO roleResponseDTO = modelMapper.map(roleEntity, RoleResponseDTO.class);
-                roleResponseDTO.setCreatedAt(roleEntity.getCreateAt());
-                roleResponseDTO.setUpdatedAt(roleEntity.getUpdateAt());
-                roleResponseDTOS.add(roleResponseDTO);
-            }
-            return ResponseEntity.ok().body(
-                    CommonResponse.builder()
-                            .status(HttpStatus.OK.value())
-                            .message("Get All Roles Done")
-                            .data(roleResponseDTOS)
-                            .build()
-            );
-        }catch (Exception e) {
-            throw e;
-        }
-    }
 
-    @Override
-    public ResponseEntity<?> getUserByName(String name) {
-        try {
-            Optional<UserEntity> user = userRepository.findByUsername(name);
-            if (user.isPresent()) {
-                UserResponseDTO userResponse = modelMapper.map(user, UserResponseDTO.class);
-                userResponse.setCreatedAt(user.get().getCreateAt());
-                userResponse.setUpdatedAt(user.get().getUpdateAt());
-
-                List<RoleResponseDTO> roleResponseDTOS = new ArrayList<>();
-                List<UserRoleEntity> userRoleEntities = user.get().getUserRoles();
-                for (UserRoleEntity userRoleEntity : userRoleEntities) {
-                    RoleEntity roleEntity = userRoleEntity.getRoleId();
-                    RoleResponseDTO roleResponseDTO = new RoleResponseDTO();
-                    roleResponseDTO.setId(roleEntity.getId());
-                    roleResponseDTO.setName(roleEntity.getName());
-                    roleResponseDTO.setDescRole(roleEntity.getDescRole());
-                    roleResponseDTO.setCreatedAt(roleEntity.getCreateAt());
-                    roleResponseDTO.setUpdatedAt(roleEntity.getUpdateAt());
-                    roleResponseDTOS.add(roleResponseDTO);
-                }
-                userResponse.setRoles(roleResponseDTOS);
-                return ResponseEntity.ok().body(
-                        CommonResponse.builder()
-                                .status(HttpStatus.OK.value())
-                                .message("Get User By Name Done")
-                                .data(userResponse)
-                                .build()
-                );
-            }else {
-                throw new  NotFoundException("User not found");
-            }
-        }catch (Exception ex) {
-            throw ex;
-        }
-    }
 
     @Override
     public ResponseEntity<CommonResponse> getCurrentUser(String token) {

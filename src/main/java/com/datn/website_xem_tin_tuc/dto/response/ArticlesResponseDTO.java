@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -26,6 +27,7 @@ public class ArticlesResponseDTO {
     private Integer quantityBookmark;
     private UserResponseDTO author;
     private CategoryResponseDTO category;
+    private List<TagResponse> tags;
     private Date createAt;
 
 }

@@ -43,4 +43,9 @@ public class ArticlesEntity extends BaseEntity<Long> {
 
     @OneToMany(mappedBy = "articles", cascade = CascadeType.ALL)
     private List<DocumentEntity> documentEntities;
+
+    @OneToMany(mappedBy = "articles")
+    private List<TagArticlesEntity> tagArticlesEntities;
+
+
 }

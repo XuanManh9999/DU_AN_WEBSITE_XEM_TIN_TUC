@@ -1,11 +1,11 @@
 package com.datn.website_xem_tin_tuc.service.impl;
 
 import com.datn.website_xem_tin_tuc.dto.request.ArticlesRequest;
-import com.datn.website_xem_tin_tuc.dto.response.ArticlesResponseDTO;
-import com.datn.website_xem_tin_tuc.dto.response.CategoryResponseDTO;
-import com.datn.website_xem_tin_tuc.dto.response.CommonResponse;
-import com.datn.website_xem_tin_tuc.dto.response.UserResponseDTO;
+import com.datn.website_xem_tin_tuc.dto.response.*;
 import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
+import com.datn.website_xem_tin_tuc.entity.CategoryEntity;
+import com.datn.website_xem_tin_tuc.entity.TagArticlesEntity;
+import com.datn.website_xem_tin_tuc.entity.TagEntity;
 import com.datn.website_xem_tin_tuc.enums.Active;
 import com.datn.website_xem_tin_tuc.enums.TypeArticles;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
@@ -22,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -167,6 +168,20 @@ public class ArticlesServiceImpl implements ArticlesService {
     private ArticlesResponseDTO mapToDto(ArticlesEntity entity) {
         Integer quantityLike = likeRepository.countByArticles(entity);
         Integer quantityBookmark = bookmarkRepository.countByArticles(entity);
+
+        List<TagResponse> tagResponses = new ArrayList<>();
+
+
+        for (TagArticlesEntity tagArticlesEntity : entity.getTagArticlesEntities()) {
+            tagResponses.add(TagResponse.builder()
+                            .id(tagArticlesEntity.getTag().getId())
+                            .name(tagArticlesEntity.getTag().getName())
+                            .description(tagArticlesEntity.getTag().getDescription())
+                            .createAt(tagArticlesEntity.getTag().getCreateAt())
+                            .updateAt(tagArticlesEntity.getTag().getUpdateAt())
+                    .build());
+        }
+
         return ArticlesResponseDTO.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
@@ -192,6 +207,7 @@ public class ArticlesServiceImpl implements ArticlesService {
                         .id(entity.getCategory().getId())
                         .slug(entity.getCategory().getSlug())
                         .build())
+                .tags(tagResponses)
                 .createAt(entity.getCreateAt())
                 .build();
     }
