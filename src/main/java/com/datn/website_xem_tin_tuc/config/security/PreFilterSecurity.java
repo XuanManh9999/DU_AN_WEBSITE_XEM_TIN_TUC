@@ -51,15 +51,18 @@ public class PreFilterSecurity extends OncePerRequestFilter {
                 }
             }
 
-        }catch (ExpiredJwtException ex) {
+        } catch (ExpiredJwtException ex) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\": \"JWT expired\"}");
-            return; // Ngăn không cho request đi tiếp
-        }catch (Exception ex) {
-
-            throw new RuntimeException("Invalid token", ex);
+            return;
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Invalid token\"}");
+            return;
         }
+
         filterChain.doFilter(request, response);// sau khi vao day se chuyen huong toi cac api cua ung dung
     }
 }

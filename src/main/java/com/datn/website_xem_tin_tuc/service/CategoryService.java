@@ -15,4 +15,5 @@ public interface CategoryService {
     CommonResponse getAllPostByCategory(String slug, int limit, int offset);
     void delete(Long id);
     CommonResponse getAllCategoriesWithPagination(String keyword, int limit, int offset);
+
 }
