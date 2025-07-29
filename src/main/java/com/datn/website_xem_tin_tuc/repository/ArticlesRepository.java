@@ -6,12 +6,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ArticlesRepository  extends JpaRepository<ArticlesEntity, Long> {
+    List<ArticlesEntity> findTop3ByCategory_IdAndIdNotOrderByCreateAtDesc(Long categoryId, Long excludedArticleId);
     Page<ArticlesEntity> findByTitleContainingIgnoreCase(String title, Pageable pageable);
     Optional<ArticlesEntity> findBySlug(String slug);
     boolean existsByTitleIgnoreCase(String title);
     boolean existsBySlugIgnoreCase(String slug);
+    Page<ArticlesEntity> findAllByCategory_SlugIgnoreCase(String slug, Pageable pageable);
+    List<ArticlesEntity> findTop4ByCategory_IdOrderByCreateAtDesc(Long categoryId);
 }

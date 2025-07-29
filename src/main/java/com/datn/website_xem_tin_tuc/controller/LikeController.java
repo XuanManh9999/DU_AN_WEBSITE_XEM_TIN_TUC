@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.*;
 public class LikeController {
     private final LikeService likeService;
     @GetMapping("/all-like-by-user")
-    public ResponseEntity<?> getAllLikeByUser() {
-        return ResponseEntity.status(HttpStatus.OK.value()).body(likeService.getAllLikeByUser());
+    public ResponseEntity<?> getAllLikeByUser(
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0") int offset
+    ) {
+        return ResponseEntity.status(HttpStatus.OK.value()).body(likeService.getAllLikeByUser(limit, offset));
     }
 
     @PostMapping("")

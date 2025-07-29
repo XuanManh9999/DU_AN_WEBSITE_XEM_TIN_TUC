@@ -4,6 +4,8 @@ import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
 import com.datn.website_xem_tin_tuc.entity.BookmarkEntity;
 import com.datn.website_xem_tin_tuc.entity.LikeEntity;
 import com.datn.website_xem_tin_tuc.entity.UserEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,7 +15,8 @@ import java.util.Optional;
 @Repository
 public interface LikeRepository extends JpaRepository<LikeEntity, Long> {
     Optional<LikeEntity> findByUserAndArticles(UserEntity user, ArticlesEntity articles);
-    List<LikeEntity> findAllByUser(UserEntity user);
+//    List<LikeEntity> findAllByUser(UserEntity user);
+    Page<LikeEntity> findAllByUser(UserEntity user, Pageable pageable);
     boolean existsByUserAndArticles(UserEntity user, ArticlesEntity articles);
     Integer countByArticles(ArticlesEntity articles);
 }

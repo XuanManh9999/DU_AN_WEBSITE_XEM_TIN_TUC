@@ -20,10 +20,21 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllUsers (
             @RequestParam(defaultValue = "10", name = "limit") Integer limit,
-            @RequestParam(defaultValue = "0", name = "limit") Integer offset
+            @RequestParam(defaultValue = "0", name = "offset") Integer offset
     ) {
         return manageUserService.getAllUsers(limit, offset);
     }
+
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUserByName(
+            @RequestParam (defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "10", name = "limit") Integer limit,
+            @RequestParam(defaultValue = "0", name = "offset") Integer offset
+    ) {
+        return manageUserService.searchUserByName(keyword, limit, offset);
+    }
+
 
     @GetMapping("/current")
     public ResponseEntity<CommonResponse> getCurrentUserByToken (
@@ -75,8 +86,6 @@ public class UserController {
     ) {
         return manageUserService.updateInfoUser(username, avatar);
     }
-
-
 
     @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {

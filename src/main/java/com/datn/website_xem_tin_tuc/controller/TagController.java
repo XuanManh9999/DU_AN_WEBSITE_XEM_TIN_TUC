@@ -5,6 +5,7 @@ import com.datn.website_xem_tin_tuc.dto.response.CommonResponse;
 import com.datn.website_xem_tin_tuc.dto.response.TagResponse;
 import com.datn.website_xem_tin_tuc.service.TagService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,12 +58,20 @@ public class TagController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<CommonResponse> getAll() {
-        List<TagResponse> tags = tagService.getAll();
+    public ResponseEntity<CommonResponse> getAll(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<TagResponse> tagPage = tagService.getAll(keyword, page, size);
         return ResponseEntity.ok(CommonResponse.builder()
                 .status(200)
                 .message("Get all tags successfully")
-                .data(tags)
+                .data(tagPage.getContent())
+                .totalItems(tagPage.getTotalElements())
+                .totalPages(tagPage.getTotalPages())
+                .currentPage(tagPage.getNumber())
                 .build());
     }
+
 }

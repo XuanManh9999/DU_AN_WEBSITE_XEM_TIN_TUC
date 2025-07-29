@@ -381,6 +381,54 @@ public class ManageUserServiceImpl implements ManageUserService {
         }
     }
 
+    @Override
+        public ResponseEntity<CommonResponse> searchUserByName(String keyword, Integer limit, Integer offset) {
+        try {
+            Pageable pageable = PageRequest.of(offset, limit);
+            Page<UserEntity> userPage = userRepository.findByUsernameContainingIgnoreCase(keyword, pageable);
+            List<UserEntity> users = userPage.getContent();
+
+            List<UserResponseDTO> userResponses = users.stream().map(user -> {
+                UserResponseDTO userResponse = modelMapper.map(user, UserResponseDTO.class);
+                userResponse.setCreatedAt(user.getCreateAt());
+                userResponse.setUpdatedAt(user.getUpdateAt());
+
+                List<RoleResponseDTO> roleResponseDTOS = user.getUserRoles().stream().map(userRoleEntity -> {
+                    RoleEntity roleEntity = userRoleEntity.getRoleId();
+                    return RoleResponseDTO.builder()
+                            .id(roleEntity.getId())
+                            .name(roleEntity.getName())
+                            .descRole(roleEntity.getDescRole())
+                            .createdAt(roleEntity.getCreateAt())
+                            .updatedAt(roleEntity.getUpdateAt())
+                            .build();
+                }).collect(Collectors.toList());
+
+                List<ArticlesResponseDTO> articlesResponseDTOS = user.getArticlesEntities().stream()
+                        .map(this::mapToDto)
+                        .collect(Collectors.toList());
+
+                userResponse.setRoles(roleResponseDTOS);
+                userResponse.setArticles(articlesResponseDTOS);
+                return userResponse;
+            }).collect(Collectors.toList());
+
+            CommonResponse response = CommonResponse.builder()
+                    .status(HttpStatus.OK.value())
+                    .message("Tìm kiếm người dùng theo từ khóa thành công")
+                    .data(userResponses)
+                    .totalPage(userPage.getTotalPages())
+                    .currentPage(userPage.getNumber())
+                    .totalItems(userPage.getTotalElements())
+                    .build();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
     private ArticlesResponseDTO mapToDto(ArticlesEntity entity) {
         Integer quantityLike = likeRepository.countByArticles(entity);
         Integer quantityBookmark = bookmarkRepository.countByArticles(entity);

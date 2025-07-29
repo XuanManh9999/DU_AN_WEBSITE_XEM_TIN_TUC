@@ -21,6 +21,7 @@ public class ArticlesResponseDTO {
     private String thumbnail;
     private Active active;
     private String slug;
+    private String slugCategory;
     private Integer view;
     private TypeArticles type;
     private Integer quantityLike;
@@ -29,5 +30,7 @@ public class ArticlesResponseDTO {
     private CategoryResponseDTO category;
     private List<TagResponse> tags;
     private Date createAt;
+    private boolean isLike;
+    private boolean isBookmark;
 
 }

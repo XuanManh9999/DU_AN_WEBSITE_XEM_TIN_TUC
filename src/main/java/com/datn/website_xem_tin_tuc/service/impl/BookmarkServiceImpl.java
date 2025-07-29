@@ -14,6 +14,10 @@ import com.datn.website_xem_tin_tuc.repository.BookmarkRepository;
 import com.datn.website_xem_tin_tuc.repository.UserRepository;
 import com.datn.website_xem_tin_tuc.service.BookmarkService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -29,29 +33,43 @@ public class BookmarkServiceImpl implements BookmarkService {
     private final CurrentUser currentUser;
 
     @Override
-    public CommonResponse getAllBookMarkByUser() {
+    public CommonResponse getAllBookMarkByUser(int limit, int offset) {
         UserEntity user = currentUser.getCurrentUser();
-        List<BookmarkEntity> bookmarkEntities = bookmarkRepository.findAllByUser(user);
-        List<BookmarkResponseDTO> bookmarkResponseDTOS = new ArrayList<>();
-         for(BookmarkEntity bookmark : bookmarkEntities) {
-             bookmarkResponseDTOS.add(BookmarkResponseDTO.builder()
-                             .id(bookmark.getId())
-                             .nameArticles(bookmark.getArticles().getTitle())
-                             .slug(bookmark.getArticles().getSlug())
-                             .author(bookmark.getUser().getUsername())
-                             .userId(bookmark.getUser().getId())
-                             .ArticlesId(bookmark.getArticles().getId())
-                             .categoryName(bookmark.getArticles().getCategory().getName())
-                             .createAt(bookmark.getCreateAt())
-                             .updateAt(bookmark.getUpdateAt())
-                     .build());
-        }
-         return CommonResponse.builder()
-                 .status(HttpStatus.OK.value())
-                 .message("Lấy thông tin chi tiết người dùng đã bookmark thành công")
-                 .data(bookmarkResponseDTOS)
-                 .build();
+
+        // Chuyển offset & limit sang dạng Pageable
+        Pageable pageable = PageRequest.of(offset / limit, limit, Sort.by(Sort.Direction.DESC, "createAt"));
+
+        Page<BookmarkEntity> bookmarkPage = bookmarkRepository.findAllByUser(user, pageable);
+
+        List<BookmarkResponseDTO> bookmarkResponseDTOS = bookmarkPage.getContent().stream()
+                .map(bookmark -> BookmarkResponseDTO.builder()
+                        .id(bookmark.getId())
+                        .nameArticles(bookmark.getArticles().getTitle())
+                        .slug(bookmark.getArticles().getSlug())
+                        .author(bookmark.getUser().getUsername())
+                        .thumbnail(bookmark.getArticles().getThumbnail())
+                        .content(bookmark.getArticles().getContent())
+                        .userId(bookmark.getUser().getId())
+                        .view(bookmark.getArticles().getView())
+                        .slugCategory(bookmark.getArticles().getCategory().getSlug())
+                        .ArticlesId(bookmark.getArticles().getId())
+                        .categoryName(bookmark.getArticles().getCategory().getName())
+                        .createAt(bookmark.getCreateAt())
+                        .articlesCreateAt(bookmark.getArticles().getCreateAt())
+                        .build())
+                .toList();
+
+        return CommonResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message("Lấy thông tin chi tiết người dùng đã bookmark thành công")
+                .data(bookmarkResponseDTOS)
+                .totalPages(bookmarkPage.getTotalPages())
+                .currentPage(bookmarkPage.getNumber()) // = offset / limit
+                .totalItems(bookmarkPage.getTotalElements())
+                .build();
     }
+
+
 
     @Override
     public CommonResponse bookmark(BookmarkRequest bookmarkRequest) {
@@ -79,7 +97,7 @@ public class BookmarkServiceImpl implements BookmarkService {
         }
         BookmarkEntity bookmark = bookmarkRepository.findByUserAndArticles(user, articles).orElseThrow(() -> new NotFoundException("Lịch sử bookmark không tồn tại"));
         bookmarkRepository.delete(bookmark);
-        return CommonResponse.builder()
+            return CommonResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("Bỏ bookmark bài viết thành công")
                 .build();

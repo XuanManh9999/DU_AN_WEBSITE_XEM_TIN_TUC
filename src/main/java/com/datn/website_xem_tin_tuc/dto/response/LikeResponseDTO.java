@@ -15,10 +15,14 @@ public class LikeResponseDTO {
     private Long id;
     private String nameArticles;
     private String categoryName;
+    private String content;
+    private Integer view;
     private String slug;
+    private String slugCategory;
+    private String thumbnail;
     private Long ArticlesId;
     private Long userId;
     private String author;
     private Date createAt;
-    private Date updateAt;
+    private Date articlesCreateAt;
 }

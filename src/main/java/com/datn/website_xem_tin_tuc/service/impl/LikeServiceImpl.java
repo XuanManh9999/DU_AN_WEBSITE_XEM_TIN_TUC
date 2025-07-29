@@ -14,11 +14,17 @@ import com.datn.website_xem_tin_tuc.repository.LikeRepository;
 import com.datn.website_xem_tin_tuc.repository.UserRepository;
 import com.datn.website_xem_tin_tuc.service.LikeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,29 +34,38 @@ public class LikeServiceImpl implements LikeService {
     private final ArticlesRepository articlesRepository;
     private final CurrentUser currentUser;
 
-
     @Override
-    public CommonResponse getAllLikeByUser() {
+    public CommonResponse getAllLikeByUser(int limit, int offset) {
         UserEntity user = currentUser.getCurrentUser();
-        List<LikeEntity> bookmarkEntities = likeRepository.findAllByUser(user);
-        List<LikeResponseDTO> likeResponseDTOS = new ArrayList<>();
-        for(LikeEntity like : bookmarkEntities) {
-                    likeResponseDTOS.add(LikeResponseDTO.builder()
-                    .id(like.getId())
-                    .nameArticles(like.getArticles().getTitle())
-                    .slug(like.getArticles().getSlug())
-                    .author(like.getUser().getUsername())
-                    .userId(like.getUser().getId())
-                    .ArticlesId(like.getArticles().getId())
-                    .categoryName(like.getArticles().getCategory().getName())
-                    .createAt(like.getCreateAt())
-                    .updateAt(like.getUpdateAt())
-                    .build());
-        }
+
+        Pageable pageable = PageRequest.of(offset / limit, limit, Sort.by(Sort.Direction.DESC, "createAt"));
+        Page<LikeEntity> likePage = likeRepository.findAllByUser(user, pageable);
+
+        List<LikeResponseDTO> likeResponseDTOS = likePage.stream()
+                .map(like -> LikeResponseDTO.builder()
+                        .id(like.getId())
+                        .nameArticles(like.getArticles().getTitle())
+                        .slug(like.getArticles().getSlug())
+                        .content(like.getArticles().getContent())
+                        .author(like.getUser().getUsername())
+                        .view(like.getArticles().getView())
+                        .userId(like.getUser().getId())
+                        .thumbnail(like.getArticles().getThumbnail())
+                        .slugCategory(like.getArticles().getCategory().getSlug())
+                        .ArticlesId(like.getArticles().getId())
+                        .categoryName(like.getArticles().getCategory().getName())
+                        .createAt(like.getCreateAt())
+                        .articlesCreateAt(like.getArticles().getCreateAt())
+                        .build())
+                .collect(Collectors.toList());
+
         return CommonResponse.builder()
                 .status(HttpStatus.OK.value())
-                .message("Lấy thông tin chi tiết người dùng đã like thành công")
+                .message("Lấy thông tin chi tiết người dùng đã bookmark thành công")
                 .data(likeResponseDTOS)
+                .totalPages(likePage.getTotalPages())
+                .currentPage(likePage.getNumber()) // = offset / limit
+                .totalItems(likePage.getTotalElements())
                 .build();
     }
 

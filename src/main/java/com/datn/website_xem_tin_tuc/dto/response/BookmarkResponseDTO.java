@@ -15,10 +15,14 @@ public class BookmarkResponseDTO {
     private Long id;
     private String nameArticles;
     private String categoryName;
+    private String content;
+    private String thumbnail;
+    private Integer view;
     private String slug;
+    private String slugCategory;
     private Long ArticlesId;
     private Long userId;
     private String author;
     private Date createAt;
-    private Date updateAt;
+    private Date articlesCreateAt;
 }

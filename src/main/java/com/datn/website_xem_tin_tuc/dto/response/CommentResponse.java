@@ -9,6 +9,7 @@ import java.util.List;
 @Data
 public class CommentResponse {
     private Long id;
+    private String  avatar;
     private String content;
     private String username;
     private Date createdAt;

@@ -21,5 +21,5 @@ public interface ManageUserService {
     ResponseEntity<CommonResponse> getCurrentUser(String token);
     ResponseEntity<?> updateInfoUser(String username, MultipartFile avatar);
     ResponseEntity<?> changePasswordUser(ChangePasswordRequest changePasswordRequest);
-
+    ResponseEntity<?> searchUserByName(String keyword, Integer limit, Integer offset);
 }

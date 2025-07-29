@@ -4,6 +4,7 @@ import com.datn.website_xem_tin_tuc.dto.request.CategoryRequestDTO;
 import com.datn.website_xem_tin_tuc.dto.response.CategoryResponseDTO;
 import com.datn.website_xem_tin_tuc.dto.response.CommonResponse;
 import com.datn.website_xem_tin_tuc.service.CategoryService;
+import com.google.api.Http;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,35 @@ public class CategoryController {
                         .message("Lấy tất cả thông tin danh mục thành công")
                         .data(categoryService.getAllAsTree(keyword))
                 .build());
+    }
+
+    @GetMapping("/all-manage")
+    public ResponseEntity<CommonResponse> getAllCategory(
+            @RequestParam(defaultValue = "10") Integer limit,
+            @RequestParam(defaultValue = "0") Integer offset,
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+        CommonResponse response = categoryService.getAllCategoriesWithPagination(keyword, limit, offset);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    @GetMapping("/by-detail-articles")
+    public ResponseEntity<?> getPostsByCategoryAndIgnoreCurrentPost (
+            @RequestParam(name = "categoryId") Long categoryId,
+            @RequestParam(name = "articlesId") Long articlesId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK.value()).body(categoryService.getPostsByCategoryAndIgnoreCurrentPost(categoryId, articlesId));
+    }
+
+    @GetMapping("/by-articles")
+    public ResponseEntity<?> getAllPostByCategory(
+            @RequestParam(name = "slug") String slug,
+            @RequestParam(name = "limit", defaultValue = "10") int limit,
+            @RequestParam(name = "offset", defaultValue = "0") int offset
+    ) {
+        return ResponseEntity.status(HttpStatus.OK.value()).body(categoryService.getAllPostByCategory(slug, limit, offset));
     }
 
     @GetMapping("/{id}")

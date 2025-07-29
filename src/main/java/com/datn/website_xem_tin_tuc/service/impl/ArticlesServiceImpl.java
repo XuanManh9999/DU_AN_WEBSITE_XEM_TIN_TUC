@@ -1,11 +1,9 @@
 package com.datn.website_xem_tin_tuc.service.impl;
 
+import com.datn.website_xem_tin_tuc.component.CurrentUser;
 import com.datn.website_xem_tin_tuc.dto.request.ArticlesRequest;
 import com.datn.website_xem_tin_tuc.dto.response.*;
-import com.datn.website_xem_tin_tuc.entity.ArticlesEntity;
-import com.datn.website_xem_tin_tuc.entity.CategoryEntity;
-import com.datn.website_xem_tin_tuc.entity.TagArticlesEntity;
-import com.datn.website_xem_tin_tuc.entity.TagEntity;
+import com.datn.website_xem_tin_tuc.entity.*;
 import com.datn.website_xem_tin_tuc.enums.Active;
 import com.datn.website_xem_tin_tuc.enums.TypeArticles;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
@@ -19,11 +17,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,10 +30,50 @@ import java.util.stream.Collectors;
 public class ArticlesServiceImpl implements ArticlesService {
     private final ArticlesRepository articlesRepository;
     private final CloudinaryService cloudinaryService;
+    private final TagArticlesRepository tagArticlesRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final LikeRepository likeRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final CurrentUser currentUser;
+    private final StringRedisTemplate redisTemplate;
+    private final TagRepository tagRepository;
+    @Override
+    public Map<Long, Long> fetchAndResetViewCounts() {
+        Set<String> keys = redisTemplate.keys("article:view:*");
+        Map<Long, Long> result = new HashMap<>();
+
+        if (keys != null) {
+            for (String key : keys) {
+                String articleIdStr = key.split(":")[2];
+                Long articleId = Long.parseLong(articleIdStr);
+
+                String value = redisTemplate.opsForValue().get(key);
+                if (value != null) {
+                    Long views = Long.parseLong(value);
+                    result.put(articleId, views);
+
+                    // Xoá key sau khi lấy
+                    redisTemplate.delete(key);
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void increaseView(Long articleId, String userKey) {
+        String viewCacheKey = "article:viewed:" + articleId + ":" + userKey;
+        Boolean alreadyViewed = redisTemplate.hasKey(viewCacheKey);
+
+        if (!alreadyViewed) {
+            // Tăng view count
+            redisTemplate.opsForValue().increment("article:view:" + articleId);
+
+            // Đánh dấu đã xem để chống spam
+            redisTemplate.opsForValue().set(viewCacheKey, "1", Duration.ofHours(6));
+        }
+    }
 
     @Override
     public CommonResponse getAllArticles(int limit, int offset, String sortBy, String order, String title) {
@@ -70,10 +109,10 @@ public class ArticlesServiceImpl implements ArticlesService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy bài viết dựa trên ID cung cấp: " + id));
         return mapToDto(article);
     }
-
     @Override
     public ArticlesResponseDTO createArticle(String title, String slug, String content,
-                                             MultipartFile thumbnail, TypeArticles typeEnum, Long authorId, Long categoryId) {
+                                             MultipartFile thumbnail, TypeArticles typeEnum,
+                                             List<Long> tagIds, Long categoryId) {
         if (articlesRepository.existsByTitleIgnoreCase(title)) {
             throw new DuplicateResourceException("Tiêu đề bài viết đã tồn tại");
         }
@@ -94,10 +133,30 @@ public class ArticlesServiceImpl implements ArticlesService {
             article.setThumbnail(thumbnailUrl);
         }
 
-        article.setAuthor(userRepository.findById(authorId).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng")));
-        article.setCategory(categoryRepository.findById(categoryId).orElseThrow(() -> new NotFoundException("Không tìm thấy danh mục")));
+        UserEntity user = currentUser.getCurrentUser();
+        if (user == null) {
+            throw new NotFoundException("Không xác định được người dùng hiện tại");
+        }
+        article.setAuthor(user);
+        article.setCategory(categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy danh mục")));
+
+        if (article.getTagArticlesEntities() == null) {
+            article.setTagArticlesEntities(new ArrayList<>());
+        }
+
 
         ArticlesEntity saved = articlesRepository.save(article);
+        for (Long tagId : tagIds) {
+            TagEntity tag = tagRepository.findById(Math.toIntExact(tagId))
+                    .orElseThrow(() -> new NotFoundException("Không tìm thấy tag"));
+
+            TagArticlesEntity tagArticle = new TagArticlesEntity();
+            tagArticle.setArticles(article);  // gán bài viết
+            tagArticle.setTag(tag);          // gán tag
+            tagArticlesRepository.save(tagArticle);
+            article.getTagArticlesEntities().add(tagArticle);
+        }
         return mapToDto(saved);
     }
 
@@ -154,8 +213,12 @@ public class ArticlesServiceImpl implements ArticlesService {
     public void deleteArticle(Long id) {
         ArticlesEntity article = articlesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy bài viết"));
-        article.setActive(Active.CHUA_HOAT_DONG);
-        articlesRepository.save(article);
+
+        // Xóa tất cả bản ghi liên kết với article_id trong bảng trung gian
+        tagArticlesRepository.deleteByArticleId(id);
+
+        // Sau đó mới xoá article
+        articlesRepository.delete(article);
     }
 
     @Override
@@ -165,10 +228,21 @@ public class ArticlesServiceImpl implements ArticlesService {
         return mapToDto(entity);
     }
 
+    @Override
+    public List<ArticlesResponseDTO> getArticleByCategoryId(Long categoryId) {
+        List<ArticlesEntity> articles = articlesRepository
+                .findTop4ByCategory_IdOrderByCreateAtDesc(categoryId);
+
+        return articles.stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+
+
     private ArticlesResponseDTO mapToDto(ArticlesEntity entity) {
         Integer quantityLike = likeRepository.countByArticles(entity);
         Integer quantityBookmark = bookmarkRepository.countByArticles(entity);
-
         List<TagResponse> tagResponses = new ArrayList<>();
 
 
@@ -192,6 +266,7 @@ public class ArticlesServiceImpl implements ArticlesService {
                 .active(entity.getActive())
                 .quantityBookmark(quantityBookmark)
                 .quantityLike(quantityLike)
+                .slugCategory(entity.getCategory().getSlug())
                 .author(UserResponseDTO.builder()
                         .id(entity.getAuthor().getId())
                         .username(entity.getAuthor().getUsername())
@@ -208,6 +283,8 @@ public class ArticlesServiceImpl implements ArticlesService {
                         .slug(entity.getCategory().getSlug())
                         .build())
                 .tags(tagResponses)
+                .isLike(likeRepository.existsByUserAndArticles(currentUser.getCurrentUser(), entity))
+                .isBookmark(bookmarkRepository.existsByUserAndArticles(currentUser.getCurrentUser(), entity))
                 .createAt(entity.getCreateAt())
                 .build();
     }

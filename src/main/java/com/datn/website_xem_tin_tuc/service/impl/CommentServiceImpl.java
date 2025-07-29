@@ -77,6 +77,7 @@ public class CommentServiceImpl implements CommentService {
     private CommentResponse mapToResponse(CommentEntity comment) {
         CommentResponse response = new CommentResponse();
         response.setId(comment.getId());
+            response.setAvatar(comment.getUser().getAvatar());
         response.setContent(comment.getContent());
         response.setUsername(comment.getUser().getUsername());
         response.setCreatedAt(comment.getCreateAt());
