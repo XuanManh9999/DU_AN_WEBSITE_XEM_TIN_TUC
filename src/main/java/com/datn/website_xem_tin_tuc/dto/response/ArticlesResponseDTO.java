@@ -2,6 +2,7 @@ package com.datn.website_xem_tin_tuc.dto.response;
 
 import com.datn.website_xem_tin_tuc.enums.Active;
 import com.datn.website_xem_tin_tuc.enums.TypeArticles;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

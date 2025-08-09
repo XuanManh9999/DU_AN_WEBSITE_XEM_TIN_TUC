@@ -1,5 +1,6 @@
 package com.datn.website_xem_tin_tuc.repository;
 
+import com.datn.website_xem_tin_tuc.dto.response.CommonResponse;
 import com.datn.website_xem_tin_tuc.entity.RoleEntity;
 import com.datn.website_xem_tin_tuc.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,5 @@ import java.util.Optional;
 @Repository
 public interface RoleRepository extends JpaRepository<RoleEntity, Integer> {
     Optional<RoleEntity> findRoleEntityByName(Role name);
-    Optional<RoleEntity> findByName(String name);
 
 }

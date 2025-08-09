@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 // mở lập lịch
 @EnableScheduling
-public class    WebsiteXemTinTucApplication {
+public class WebsiteXemTinTucApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(WebsiteXemTinTucApplication.class, args);
 	}
