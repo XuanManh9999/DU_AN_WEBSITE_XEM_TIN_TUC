@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 public interface ArticlesService {
-    Map<Long, Long> fetchAndResetViewCounts();
-    void increaseView(Long articleId, String userKey);
+//    Map<Long, Long> fetchAndResetViewCounts();
+    // Dùng redis
+//    void increaseView(Long articleId, String userKey);
+    void increaseView(Long articleId);
     CommonResponse getAllArticles(int limit, int offset, String sortBy, String order, String title);
     ArticlesResponseDTO getArticleById(Long id);
     ArticlesResponseDTO createArticle(String title, String slug, String content, MultipartFile thumbnail, TypeArticles typeEnum, List<Long> tagIds, Long categoryId);

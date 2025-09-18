@@ -26,23 +26,30 @@ public class ArticlesController {
 
     private final ArticlesService articlesService;
     private final CurrentUser currentUser;
+//    Dùng redis
+//    @PostMapping("/{id}/view")
+//    public ResponseEntity<?> increaseView(@PathVariable Long id, HttpServletRequest request) {
+//        String userKey;
+//
+//        // Nếu có login thì lấy userId, không thì lấy IP
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+//            userKey = currentUser.getCurrentUser().getId().toString();
+//        } else {
+//            userKey = request.getRemoteAddr(); // IP Address fallback
+//        }
+//
+//        articlesService.increaseView(id, userKey);
+//        return ResponseEntity.ok().build();
+//    }
+
+    // Không dùng redis
+
     @PostMapping("/{id}/view")
     public ResponseEntity<?> increaseView(@PathVariable Long id, HttpServletRequest request) {
-        String userKey;
-
-        // Nếu có login thì lấy userId, không thì lấy IP
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            userKey = currentUser.getCurrentUser().getId().toString();
-        } else {
-            userKey = request.getRemoteAddr(); // IP Address fallback
-        }
-
-        articlesService.increaseView(id, userKey);
+        articlesService.increaseView(id);
         return ResponseEntity.ok().build();
     }
-
-
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllArticle(@RequestParam(name = "limit", defaultValue = "10") int limit,

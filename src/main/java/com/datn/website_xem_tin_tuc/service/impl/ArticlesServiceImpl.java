@@ -4,7 +4,6 @@ import com.datn.website_xem_tin_tuc.component.CurrentUser;
 import com.datn.website_xem_tin_tuc.dto.request.ArticlesRequest;
 import com.datn.website_xem_tin_tuc.dto.response.*;
 import com.datn.website_xem_tin_tuc.entity.*;
-import com.datn.website_xem_tin_tuc.enums.Active;
 import com.datn.website_xem_tin_tuc.enums.TypeArticles;
 import com.datn.website_xem_tin_tuc.exceptions.customs.DuplicateResourceException;
 import com.datn.website_xem_tin_tuc.exceptions.customs.NotFoundException;
@@ -17,7 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.redis.core.StringRedisTemplate;
+//import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,44 +35,54 @@ public class ArticlesServiceImpl implements ArticlesService {
     private final LikeRepository likeRepository;
     private final BookmarkRepository bookmarkRepository;
     private final CurrentUser currentUser;
-    private final StringRedisTemplate redisTemplate;
+//    private final StringRedisTemplate redisTemplate;
     private final TagRepository tagRepository;
+//    @Override
+//    public Map<Long, Long> fetchAndResetViewCounts() {
+//        Set<String> keys = redisTemplate.keys("article:view:*");
+//        Map<Long, Long> result = new HashMap<>();
+//
+//        if (keys != null) {
+//            for (String key : keys) {
+//                String articleIdStr = key.split(":")[2];
+//                Long articleId = Long.parseLong(articleIdStr);
+//
+//                String value = redisTemplate.opsForValue().get(key);
+//                if (value != null) {
+//                    Long views = Long.parseLong(value);
+//                    result.put(articleId, views);
+//
+//                    // Xoá key sau khi lấy
+//                    redisTemplate.delete(key);
+//                }
+//            }
+//        }
+//        return result;
+//    }
+    // dùng redis
+//    @Override
+//    public void increaseView(Long articleId, String userKey) {
+//        String viewCacheKey = "article:viewed:" + articleId + ":" + userKey;
+//        Boolean alreadyViewed = redisTemplate.hasKey(viewCacheKey);
+//
+//        if (!alreadyViewed) {
+//            // Tăng view count
+//            redisTemplate.opsForValue().increment("article:view:" + articleId);
+//
+//            // Đánh dấu đã xem để chống spam
+//            redisTemplate.opsForValue().set(viewCacheKey, "1", Duration.ofHours(6));
+//        }
+//    }
+//    Không dùng thêm view tự động
+
     @Override
-    public Map<Long, Long> fetchAndResetViewCounts() {
-        Set<String> keys = redisTemplate.keys("article:view:*");
-        Map<Long, Long> result = new HashMap<>();
-
-        if (keys != null) {
-            for (String key : keys) {
-                String articleIdStr = key.split(":")[2];
-                Long articleId = Long.parseLong(articleIdStr);
-
-                String value = redisTemplate.opsForValue().get(key);
-                if (value != null) {
-                    Long views = Long.parseLong(value);
-                    result.put(articleId, views);
-
-                    // Xoá key sau khi lấy
-                    redisTemplate.delete(key);
-                }
-            }
-        }
-        return result;
+    public void increaseView(Long articleId) {
+        ArticlesEntity articles = articlesRepository.findById(articleId).orElseThrow(() -> new NotFoundException("Không tìm thấy bài viết"));
+        Integer newView = articles.getView() + 1;
+        articles.setView(newView);
+        articlesRepository.save(articles);
     }
 
-    @Override
-    public void increaseView(Long articleId, String userKey) {
-        String viewCacheKey = "article:viewed:" + articleId + ":" + userKey;
-        Boolean alreadyViewed = redisTemplate.hasKey(viewCacheKey);
-
-        if (!alreadyViewed) {
-            // Tăng view count
-            redisTemplate.opsForValue().increment("article:view:" + articleId);
-
-            // Đánh dấu đã xem để chống spam
-            redisTemplate.opsForValue().set(viewCacheKey, "1", Duration.ofHours(6));
-        }
-    }
 
     @Override
     public CommonResponse getAllArticles(int limit, int offset, String sortBy, String order, String title) {
