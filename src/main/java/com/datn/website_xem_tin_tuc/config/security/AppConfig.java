@@ -27,7 +27,7 @@ public class AppConfig {
     private final ManageUserService manageUserService;
     private final PreFilterSecurity preFilterSecurity;
     private final SecurityBeansConfig securityBeansConfig;
-    private String [] WHITE_LIST = {"/api/v1/auth/**", "/api/v1/payment/**", "/api/v1/posts/**", "/api/v1/category-posts/**", "/api/v1/category-posts/by-category/**", "/api/v1/category/**", "/api/v1/articles/**"};
+    private String [] WHITE_LIST = {"/api/v1/auth/**", "/api/v1/payment/**", "/api/v1/posts/**", "/api/v1/category-posts/**", "/api/v1/category-posts/by-category/**", "/api/v1/category/**", "/api/v1/articles/**", "/api/v1/products/**", "/api/v1/address/**"};
 
     // config cors giup trinh duyet xac dinh cac origin nao duoc phep truy cap
     @Bean
@@ -36,7 +36,7 @@ public class AppConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://admin-365-news.vercel.app", "https://365news.vercel.app")
+                        .allowedOrigins("https://admin-365-news.vercel.app", "https://365news.vercel.app", "http://localhost:5173", "http://localhost:5174")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*")
                         .allowCredentials(false)
